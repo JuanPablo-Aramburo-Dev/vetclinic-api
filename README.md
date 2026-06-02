@@ -43,3 +43,28 @@ Then open:
 - `http://localhost:8000/health` — health check
 
 ## Project Structure
+app/
+├── api/         # endpoint routers (coming soon)
+├── core/        # configuration and security
+├── db/          # database session (coming soon)
+├── models/      # SQLAlchemy models (coming soon)
+├── schemas/     # Pydantic schemas (coming soon)
+└── services/    # business logic (coming soon)
+tests/           # pytest tests
+
+## Roadmap
+
+- [x] FastAPI scaffold with config
+- [ ] Docker + PostgreSQL setup
+- [ ] CI/CD with GitHub Actions
+- [ ] SQLAlchemy models and Alembic migrations
+- [ ] Authentication and authorization (JWT, roles)
+- [ ] Clients and pets CRUD
+- [ ] Appointments with conflict detection
+- [ ] Medical records and vaccines
+- [ ] Reports
+- [ ] Production deployment
+
+## License
+
+MIT
