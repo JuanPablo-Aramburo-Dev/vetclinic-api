@@ -1,0 +1,69 @@
+[project]
+name = "vetclinic-api"
+version = "0.1.0"
+description = "REST API for veterinary clinic management"
+requires-python = ">=3.12"
+
+[tool.ruff]
+# Target Python version for syntax checks
+target-version = "py312"
+
+# Line length matching modern Python conventions
+line-length = 100
+
+# Files/directories to exclude
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    "alembic/versions",
+]
+
+[tool.ruff.lint]
+# Rule selection: enable common useful rule sets
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes (unused imports, undefined names)
+    "I",      # isort (import ordering)
+    "B",      # flake8-bugbear (likely bugs and design problems)
+    "C4",     # flake8-comprehensions (better list/dict/set comprehensions)
+    "UP",     # pyupgrade (modernize syntax for target python)
+    "N",      # pep8-naming (naming conventions)
+    "SIM",    # flake8-simplify (simplifiable code)
+    "RUF",    # ruff-specific rules
+]
+
+# Rules to ignore
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # function calls in argument defaults (common in FastAPI for Depends())
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can have unused imports and longer lines
+"tests/**/*.py" = ["F401"]
+# Init files can have unused imports for re-export
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+strict_optional = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
