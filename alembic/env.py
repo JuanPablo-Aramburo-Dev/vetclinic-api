@@ -6,8 +6,10 @@ and imports all SQLAlchemy models so autogenerate can detect them.
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from alembic import context
+from app import models  # noqa: F401  -- side-effect import to register models
 
 # Import the application's settings and Base.
 # IMPORTANT: importing app.models ensures every model is registered
@@ -15,7 +17,6 @@ from sqlalchemy import engine_from_config, pool
 # should be empty and propose to drop all our tables.
 from app.core.config import get_settings
 from app.db.base import Base
-from app import models  # noqa: F401  -- side-effect import to register models
 
 # Alembic Config object, provides access to values in alembic.ini.
 config = context.config

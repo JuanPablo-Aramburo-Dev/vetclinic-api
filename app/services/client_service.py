@@ -32,9 +32,7 @@ def create_client(db: Session, payload: ClientCreate) -> Client:
     """
     existing = db.scalar(select(Client).where(Client.email == payload.email))
     if existing is not None:
-        raise ClientEmailAlreadyExistsError(
-            f"Client with email={payload.email!r} already exists"
-        )
+        raise ClientEmailAlreadyExistsError(f"Client with email={payload.email!r} already exists")
 
     client = Client(**payload.model_dump())
     db.add(client)
@@ -60,9 +58,7 @@ def update_client(
     update_data = payload.model_dump(exclude_unset=True)
 
     if "email" in update_data and update_data["email"] != client.email:
-        existing = db.scalar(
-            select(Client).where(Client.email == update_data["email"])
-        )
+        existing = db.scalar(select(Client).where(Client.email == update_data["email"]))
         if existing is not None and existing.id != client_id:
             raise ClientEmailAlreadyExistsError(
                 f"Client with email={update_data['email']!r} already exists"
