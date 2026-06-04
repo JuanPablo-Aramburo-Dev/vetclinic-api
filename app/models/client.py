@@ -43,7 +43,4 @@ class Client(Base, TimestampMixin):
     user: Mapped[User | None] = relationship("User")
 
     def __repr__(self) -> str:
-        return (
-            f"<Client id={self.id} "
-            f"name={self.first_name!r} {self.last_name!r}>"
-        )
+        return f"<Client id={self.id} " f"name={self.first_name!r} {self.last_name!r}>"
