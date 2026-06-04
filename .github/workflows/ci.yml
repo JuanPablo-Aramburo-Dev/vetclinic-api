@@ -36,5 +36,9 @@ jobs:
       - name: Run tests with pytest
         env:
           SECRET_KEY: ci-test-secret-key-not-for-production
-          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
-        run: pytest -v
+          POSTGRES_USER: ci_test_user
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: ci_test_db
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+        run: pytest
