@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     postgres_user: str = Field(...)
     postgres_password: str = Field(...)
     postgres_db: str = Field(...)
-    postgres_host: str = Field(default="db")
+    postgres_host: str = Field(default="localhost")
     postgres_port: int = Field(default=5432)
 
     @computed_field  # type: ignore[prop-decorator]
