@@ -11,6 +11,29 @@ jobs:
     name: Lint and Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vetclinic
+          POSTGRES_PASSWORD: vetclinic_ci_password
+          POSTGRES_DB: vetclinic_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SECRET_KEY: ci-test-secret-key-not-for-production
+      POSTGRES_USER: vetclinic
+      POSTGRES_PASSWORD: vetclinic_ci_password
+      POSTGRES_DB: vetclinic_test_db
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,12 +56,8 @@ jobs:
       - name: Check format with Ruff
         run: ruff format . --check
 
+      - name: Run database migrations
+        run: alembic upgrade head
+
       - name: Run tests with pytest
-        env:
-          SECRET_KEY: ci-test-secret-key-not-for-production
-          POSTGRES_USER: ci_test_user
-          POSTGRES_PASSWORD: ci_test_password
-          POSTGRES_DB: ci_test_db
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: "5432"
-        run: pytest
+        run: pytest -v
