@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from app.api import clients
+from app.api import clients, pets
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -16,7 +16,8 @@ app = FastAPI(
 
 # Routers
 app.include_router(clients.router)
-
+app.include_router(pets.router)
+app.include_router(pets.clients_pets_router)
 
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
