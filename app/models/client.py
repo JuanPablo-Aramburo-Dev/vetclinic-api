@@ -42,5 +42,10 @@ class Client(Base, TimestampMixin):
     # if the relationship is ever defined from User's side too.
     user: Mapped[User | None] = relationship("User")
 
+    pets: Mapped[list["Pet"]] = relationship(  # noqa: F821
+        back_populates="owner",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self) -> str:
         return f"<Client id={self.id} " f"name={self.first_name!r} {self.last_name!r}>"
