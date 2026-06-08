@@ -23,3 +23,10 @@ class ClientNotFoundError(NotFoundError):
 
 class ClientEmailAlreadyExistsError(AlreadyExistsError):
     """Raised when trying to create or update a Client with a taken email."""
+
+class PetNotFoundError(NotFoundError):
+    """Raised when a Pet lookup fails."""
+
+
+class OwnerNotFoundError(NotFoundError):
+    """Raised when trying to create a Pet for a Client that doesn't exist."""
