@@ -8,7 +8,8 @@ import enum
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, Enum as SQLEnum, ForeignKey, Numeric, String
+from sqlalchemy import Date, ForeignKey, Numeric, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
