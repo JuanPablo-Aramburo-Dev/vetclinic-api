@@ -19,6 +19,7 @@ app.include_router(clients.router)
 app.include_router(pets.router)
 app.include_router(pets.clients_pets_router)
 
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Liveness probe endpoint.

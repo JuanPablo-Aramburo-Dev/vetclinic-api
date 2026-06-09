@@ -74,9 +74,7 @@ def create_pet(db: Session, payload: PetCreate) -> Pet:
     """
     owner = db.get(Client, payload.owner_id)
     if owner is None:
-        raise OwnerNotFoundError(
-            f"Client with id={payload.owner_id} not found"
-        )
+        raise OwnerNotFoundError(f"Client with id={payload.owner_id} not found")
 
     pet = Pet(**payload.model_dump())
     db.add(pet)

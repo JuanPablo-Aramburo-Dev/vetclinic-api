@@ -27,9 +27,7 @@ def list_pets(
     By default only active pets are returned. Pass include_inactive=true
     to include soft-deleted pets (e.g., for historical reports).
     """
-    return pet_service.list_pets(
-        db, skip=skip, limit=limit, include_inactive=include_inactive
-    )
+    return pet_service.list_pets(db, skip=skip, limit=limit, include_inactive=include_inactive)
 
 
 @router.get(
@@ -139,9 +137,7 @@ def list_pets_by_owner(
     a legitimately empty list).
     """
     try:
-        return pet_service.list_pets_by_owner(
-            db, client_id, include_inactive=include_inactive
-        )
+        return pet_service.list_pets_by_owner(db, client_id, include_inactive=include_inactive)
     except OwnerNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
