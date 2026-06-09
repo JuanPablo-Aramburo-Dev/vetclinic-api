@@ -37,7 +37,7 @@ def _truncate_all_tables(engine) -> None:
     """
     with engine.begin() as conn:
         # CASCADE handles tables with foreign keys to each other.
-        conn.execute(text("TRUNCATE TABLE clients, users RESTART IDENTITY CASCADE"))
+        conn.execute(text("TRUNCATE TABLE pets, clients, users RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture(autouse=True)
