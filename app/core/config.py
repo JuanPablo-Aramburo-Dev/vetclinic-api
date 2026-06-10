@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     debug: bool = Field(default=True)
 
     # Seguridad
-    secret_key: str = Field(...)
-    access_token_expire_minutes: int = Field(default=60)
+    secret_key: str = Field(..., min_length=32)
+    access_token_expire_minutes: int = Field(default=60, gt=0)
     algorithm: str = Field(default="HS256")
 
     # Base de datos (componentes individuales)
