@@ -31,3 +31,19 @@ class PetNotFoundError(NotFoundError):
 
 class OwnerNotFoundError(NotFoundError):
     """Raised when trying to create a Pet for a Client that doesn't exist."""
+
+class UserNotFoundError(NotFoundError):
+    """Raised when a user lookup by id fails."""
+
+
+class UserAlreadyExistsError(Exception):
+    """Raised when attempting to register a user with an email already in use."""
+
+
+class InvalidCredentialsError(Exception):
+    """Raised when login credentials don't match any active user.
+
+    The error message is intentionally generic to prevent user
+    enumeration attacks: an attacker should not be able to distinguish
+    between "email not registered" and "wrong password".
+    """
