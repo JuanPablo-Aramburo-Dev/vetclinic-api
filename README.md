@@ -202,3 +202,46 @@ pytest -v
 - **`client`** — `TestClient` with `get_db` overridden to use the test database. Used for unauthenticated tests.
 - **`authenticated_client`** — `TestClient` with a pre-applied `Authorization: Bearer <token>` header. Used for tests that hit protected endpoints.
 - **`test_user`, `auth_headers`** — building blocks for the authenticated client; available separately for tests that need finer control (e.g., generating expired tokens).
+
+## Design Decisions
+
+A few decisions in this codebase have non-obvious reasoning. Documenting them here avoids the same questions in code review.
+
+### Why bcrypt directly instead of passlib
+
+`passlib 1.7.4` (the latest release) is incompatible with `bcrypt >= 4.1` because it reads `bcrypt.__about__.__version__`, an attribute removed in modern bcrypt. The mismatch manifests as a runtime error during the first password hash. After encountering this, I switched to using the `bcrypt` library directly. The API surface is small (`hashpw`, `checkpw`, `gensalt`), and it's the library that's actually maintained.
+
+### Why JSON for `/auth/login` instead of `OAuth2PasswordRequestForm`
+
+FastAPI tutorials typically use `OAuth2PasswordRequestForm`, which accepts `application/x-www-form-urlencoded` and names the credentials field `username`. I use JSON instead, with the field named `email`. The reasoning is consistency: the rest of the API is JSON-only, and the field name reflects the actual data. The cost of diverging from the FastAPI tutorial pattern is small; the benefit is a uniform contract across endpoints.
+
+### Why access-only tokens (no refresh tokens)
+
+A complete implementation would use short-lived access tokens (15 min) plus longer-lived refresh tokens (7-30 days) with rotation and a revocation store. That requires either a Redis instance or a dedicated database table for refresh tokens, plus token rotation logic and a `/auth/refresh` endpoint. For the scope of this portfolio, the added complexity isn't justified. Access tokens expire after 60 minutes, which is a defensible default. Refresh tokens are documented as a next step.
+
+### Why soft delete instead of hard delete for pets
+
+Veterinary records carry medical history (vaccines, conditions, prior treatments). Hard-deleting a pet because a client no longer brings it in destroys data that may be needed for clinical decisions when the client returns or transfers records to another clinic. The `is_active` flag hides the pet from operational listings (the default `GET /pets/`) but preserves the row and its relationships. Reactivation is a single `PATCH` setting `is_active: true`.
+
+### Why integration tests against real PostgreSQL instead of SQLite or mocks
+
+SQLite does not support PostgreSQL's native enum types, `NUMERIC(precision, scale)` semantics, or `ON DELETE CASCADE` behavior in the same way. Mocks of the database session don't catch the same class of bugs at all. Running 54 tests against a real PostgreSQL instance takes about 8.5 seconds — fast enough that the cost is negligible, and the tests catch real issues (enum mismatches, foreign-key violations, decimal precision) before they reach CI or production.
+
+### Why different HTTP status codes for the same domain exception
+
+`OwnerNotFoundError` maps to `422 Unprocessable Entity` when raised from `POST /pets/` (the request body references a missing resource — syntactically valid but semantically incorrect) and to `404 Not Found` when raised from `GET /clients/{id}/pets/` (the URL path itself points to a missing resource). The service layer raises one exception; the router decides the HTTP code based on context. This keeps domain logic transport-agnostic and lets the same business rule be reused in non-HTTP contexts (e.g., a future CLI or background job) without leaking HTTP concerns.
+
+## What's Next
+
+These items are deliberately out of scope for the current iteration. Each is listed with the reason for deferral and a sketch of the approach.
+
+- **Refresh tokens with rotation.** Requires a server-side store for issued refresh tokens (Redis or a dedicated table) and a `/auth/refresh` endpoint with token rotation. Pairs naturally with a token revocation list for immediate logout.
+- **Role-based authorization.** The `User` model already carries `admin`, `vet`, and `client` roles. Endpoints currently enforce only "authenticated", not "authorized for this resource". The next step is a `require_role(*allowed)` dependency factory and resource-level ownership checks (e.g., a client can only see their own pets).
+- **Remaining domain resources.** Veterinarians, Appointments, Medical Records, and Vaccines are modeled in the ERD but not yet implemented as endpoints. They follow the same layered pattern as Clients and Pets.
+- **Rate limiting.** `/auth/login` is the most obvious candidate (brute-force protection). FastAPI's middleware ecosystem includes `slowapi`, which works with Redis or an in-memory store.
+- **Production deployment.** The codebase is ready for containerized deployment. The intended target is AWS (EC2 in a private subnet for the API, RDS for the database, both inside a VPC with restrictive Security Groups). HTTPS via ACM, secrets in AWS Secrets Manager.
+- **Structured logging and observability.** Currently no logging is emitted beyond uvicorn's default. Adding `structlog` with JSON output and integrating with CloudWatch or a similar aggregator is the natural next step before production traffic.
+
+## License
+
+This project is released under the [MIT License](LICENSE).
