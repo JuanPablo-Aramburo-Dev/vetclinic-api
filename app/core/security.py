@@ -5,7 +5,7 @@ This module has no dependencies on FastAPI or SQLAlchemy, making it
 testable in isolation and reusable from CLI tools or scripts.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
@@ -69,7 +69,7 @@ def create_access_token(
     settings (access_token_expire_minutes).
     """
     settings = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + (
         expires_delta
         if expires_delta is not None
