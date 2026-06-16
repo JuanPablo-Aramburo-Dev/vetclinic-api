@@ -29,9 +29,7 @@ def register_user(db: Session, payload: UserRegister) -> User:
     """
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing is not None:
-        raise UserAlreadyExistsError(
-            f"User with email {payload.email} already exists"
-        )
+        raise UserAlreadyExistsError(f"User with email {payload.email} already exists")
 
     user = User(
         email=payload.email,

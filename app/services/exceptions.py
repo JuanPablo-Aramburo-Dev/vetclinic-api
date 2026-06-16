@@ -32,6 +32,7 @@ class PetNotFoundError(NotFoundError):
 class OwnerNotFoundError(NotFoundError):
     """Raised when trying to create a Pet for a Client that doesn't exist."""
 
+
 class UserNotFoundError(NotFoundError):
     """Raised when a user lookup by id fails."""
 
