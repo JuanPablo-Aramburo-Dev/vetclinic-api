@@ -3,9 +3,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.auth import Token, UserLogin, UserRegister
 from app.schemas.user import UserRead
 from app.services import user_service
@@ -65,3 +67,17 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> Token:
         token_type="bearer",
         expires_in=settings.access_token_expire_minutes * 60,
     )
+
+
+@router.get(
+    "/me",
+    response_model=UserRead,
+    summary="Return the currently authenticated user",
+)
+def me(current_user: User = Depends(get_current_user)) -> UserRead:
+    """Return identity information for the holder of the bearer token.
+
+    Useful for clients to verify their token is valid and to fetch
+    the user's role for UI gating.
+    """
+    return current_user
