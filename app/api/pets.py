@@ -3,7 +3,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.pet import PetCreate, PetRead, PetUpdate
 from app.services import pet_service
 from app.services.exceptions import OwnerNotFoundError, PetNotFoundError
@@ -21,6 +23,7 @@ def list_pets(
     limit: int = Query(default=50, ge=1, le=200),
     include_inactive: bool = Query(default=False),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[PetRead]:
     """Return a paginated list of pets.
 
@@ -35,7 +38,11 @@ def list_pets(
     response_model=PetRead,
     summary="Get a pet by id",
 )
-def get_pet(pet_id: int, db: Session = Depends(get_db)) -> PetRead:
+def get_pet(
+    pet_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> PetRead:
     """Return a single pet by id.
 
     Returns the pet regardless of its is_active state (medical history
@@ -59,6 +66,7 @@ def get_pet(pet_id: int, db: Session = Depends(get_db)) -> PetRead:
 def create_pet(
     payload: PetCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> PetRead:
     """Create a new pet. The referenced owner_id must exist."""
     try:
@@ -79,6 +87,7 @@ def update_pet(
     pet_id: int,
     payload: PetUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> PetRead:
     """Update only the fields provided.
 
@@ -98,7 +107,11 @@ def update_pet(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft-delete a pet",
 )
-def delete_pet(pet_id: int, db: Session = Depends(get_db)) -> None:
+def delete_pet(
+    pet_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
     """Soft-delete a pet by marking it as inactive.
 
     Idempotent: calling on an already-inactive pet is a no-op.
@@ -130,6 +143,7 @@ def list_pets_by_owner(
     client_id: int,
     include_inactive: bool = Query(default=False),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[PetRead]:
     """Return all pets belonging to the specified client.
 
