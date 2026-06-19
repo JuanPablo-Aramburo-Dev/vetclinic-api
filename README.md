@@ -70,6 +70,30 @@ The API is deployed on AWS using a custom VPC, with the database isolated in a p
 
 > Currently served over HTTP. The architecture is already prepared for HTTPS via ACM and nginx — TLS will be enabled once a custom domain is acquired (ACM requires domain ownership for certificate validation).
 
+### CI/CD
+
+Every push to `main` runs lint, format checks, and the full integration test suite. If those pass, a deploy job runs automatically.
+
+The deploy job uses a **self-hosted GitHub Actions runner** installed on the EC2 instance itself, rather than connecting via SSH from GitHub's infrastructure. This was a deliberate choice: the EC2 Security Group restricts port 22 to a single trusted IP, and GitHub-hosted runners use dynamic IP ranges that don't fit that model. Opening SSH to GitHub's IP ranges (or to `0.0.0.0/0`) would have contradicted the security posture documented above. A self-hosted runner avoids that tradeoff entirely — it polls GitHub for jobs over an outbound connection, so no inbound port changes were needed.
+
+```
+push to main
+      │
+      ▼
+┌──────────────┐     fails      ┌──────────┐
+│ Lint and Test│ ─────────────► │  stops   │
+└──────┬───────┘                └──────────┘
+       │ passes
+       ▼
+┌───────────────────────┐
+│ Deploy to EC2          │
+│ (self-hosted runner)   │
+│  git pull               │
+│  docker compose build   │
+│  docker image prune     │
+└─────────────────────────┘
+```
+
 ### API Documentation
 
 Interactive Swagger UI showing all endpoints, grouped by resource:
