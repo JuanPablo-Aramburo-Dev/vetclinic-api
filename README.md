@@ -70,6 +70,16 @@ The API is deployed on AWS using a custom VPC, with the database isolated in a p
 
 > Currently served over HTTP. The architecture is already prepared for HTTPS via ACM and nginx — TLS will be enabled once a custom domain is acquired (ACM requires domain ownership for certificate validation).
 
+### API Documentation
+
+Interactive Swagger UI showing all endpoints, grouped by resource:
+
+![Swagger UI overview](docs/screenshots/swagger-overview.png)
+
+Each endpoint documents its request/response schema and possible status codes — for example, `/auth/login` returning 200 with a JWT or 422 on invalid input:
+
+![POST /auth/login detail view](docs/screenshots/swagger-auth-detail.png)
+
 ### Infrastructure
 
 ```
