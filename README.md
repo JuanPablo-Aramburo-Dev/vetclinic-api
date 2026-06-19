@@ -8,6 +8,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live API](https://img.shields.io/badge/Live%20API-35.87.203.193-success.svg)](http://35.87.203.193/docs)
 
 ---
 
@@ -61,6 +62,69 @@ The API follows a layered architecture with clear separation of concerns:
 
 Domain exceptions from the service layer are mapped to HTTP status codes at the router layer. The same exception can map to different codes depending on context — for example, `OwnerNotFoundError` becomes `422 Unprocessable Entity` when creating a pet with an invalid `owner_id` (the body references a missing resource), but `404 Not Found` when listing `/clients/{id}/pets/` (the URL points to a missing resource).
 
+## Deployment
+
+The API is deployed on AWS using a custom VPC, with the database isolated in a private subnet.
+
+**Live API:** `http://35.87.203.193` ([Swagger UI](http://35.87.203.193/docs))
+
+> Currently served over HTTP. The architecture is already prepared for HTTPS via ACM and nginx — TLS will be enabled once a custom domain is acquired (ACM requires domain ownership for certificate validation).
+
+### Infrastructure
+
+```
+                         Internet
+                            │
+                            │ :80
+                            ▼
+                  ┌───────────────────┐
+                  │  Internet Gateway  │
+                  └─────────┬─────────┘
+                            │
+┌───────────────────────────┼────────────────────────────────┐
+│                  VPC (10.0.0.0/16)                          │
+│                            │                                │
+│              ┌─────────────▼─────────────┐                  │
+│              │      Public Subnet         │                  │
+│              │      EC2 t3.micro          │                  │
+│              │  ┌───────────────────────┐  │                  │
+│              │  │ nginx (:80 → :8000)   │  │                  │
+│              │  └───────────┬───────────┘  │                  │
+│              │  ┌───────────▼───────────┐  │                  │
+│              │  │ Docker container       │  │                  │
+│              │  │ FastAPI + uvicorn      │  │                  │
+│              │  └───────────────────────┘  │                  │
+│              │  IAM Role: Secrets Manager  │                  │
+│              └─────────────┬─────────────┘                  │
+│                            │ :5432                           │
+│                            │ (SG-to-SG only)                 │
+│              ┌─────────────▼─────────────┐                  │
+│              │     Private Subnets        │                  │
+│              │     RDS db.t3.micro         │                  │
+│              │     PostgreSQL 16           │                  │
+│              │     No public IP            │                  │
+│              └─────────────────────────────┘                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Security model
+
+- **RDS has no public IP.** Database access is restricted to traffic from the EC2 Security Group on port 5432 — not from any CIDR range.
+- **EC2 accepts SSH only from a single IP** (the maintainer's), and HTTP/HTTPS from the internet.
+- **No long-lived AWS credentials on the instance.** EC2 uses an IAM Role (`vetclinic-ec2-role`) to access AWS Secrets Manager — no Access Keys are stored on the server.
+- **Database credentials live in AWS Secrets Manager**, not in environment files committed to git or baked into the Docker image.
+- **Root AWS account is not used for operations.** All infrastructure is managed through a dedicated IAM user with MFA enabled.
+
+### Deployed stack
+
+| Component | Choice | Reasoning |
+|---|---|---|
+| Compute | EC2 t3.micro | Free Tier eligible; sufficient for portfolio-scale traffic |
+| Database | RDS PostgreSQL 16, db.t3.micro | Managed backups and patching; isolated in a private subnet |
+| Reverse proxy | nginx | Decouples the public-facing port from uvicorn; required for the planned TLS termination |
+| Container runtime | Docker + Docker Compose | Matches local development environment; single build artifact for both |
+| Secrets | AWS Secrets Manager | Avoids plaintext credentials in `.env` files on the server |
+| Excluded by design | ALB, NAT Gateway, ECS/Fargate, CloudFront | Each adds recurring cost not justified at this traffic scale; documented here so the omission reads as a decision, not an oversight |
 
 ## Project Structure
 
@@ -239,7 +303,7 @@ These items are deliberately out of scope for the current iteration. Each is lis
 - **Role-based authorization.** The `User` model already carries `admin`, `vet`, and `client` roles. Endpoints currently enforce only "authenticated", not "authorized for this resource". The next step is a `require_role(*allowed)` dependency factory and resource-level ownership checks (e.g., a client can only see their own pets).
 - **Remaining domain resources.** Veterinarians, Appointments, Medical Records, and Vaccines are modeled in the ERD but not yet implemented as endpoints. They follow the same layered pattern as Clients and Pets.
 - **Rate limiting.** `/auth/login` is the most obvious candidate (brute-force protection). FastAPI's middleware ecosystem includes `slowapi`, which works with Redis or an in-memory store.
-- **Production deployment.** The codebase is ready for containerized deployment. The intended target is AWS (EC2 in a private subnet for the API, RDS for the database, both inside a VPC with restrictive Security Groups). HTTPS via ACM, secrets in AWS Secrets Manager.
+- **HTTPS via ACM.** The application is deployed and reachable over HTTP. The nginx reverse-proxy layer is already in place specifically to support TLS termination; enabling it is a matter of acquiring a domain and requesting an ACM certificate — no architectural changes required.
 - **Structured logging and observability.** Currently no logging is emitted beyond uvicorn's default. Adding `structlog` with JSON output and integrating with CloudWatch or a similar aggregator is the natural next step before production traffic.
 
 ## License
