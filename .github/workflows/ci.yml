@@ -65,18 +65,13 @@ jobs:
   deploy:
     name: Deploy to EC2
     needs: lint-and-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ~/vetclinic-api
-            git pull origin main
-            docker compose -f docker-compose.prod.yml up -d --build
-            docker image prune -f
+      - name: Pull latest code and deploy
+        run: |
+          cd ~/vetclinic-api
+          git pull origin main
+          docker compose -f docker-compose.prod.yml up -d --build
+          docker image prune -f
